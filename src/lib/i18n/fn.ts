@@ -1,7 +1,8 @@
-import { DEV } from 'esm-env';
 import { i18nConfig, type Locale } from './config.js';
 import { getFunction } from './registry.js';
 import { getLocale } from './state.svelte.js';
+
+const DEV = import.meta.env.DEV;
 
 export function fnForLocale(
 	locale: Locale,

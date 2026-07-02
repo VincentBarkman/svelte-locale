@@ -1,9 +1,9 @@
-import { DEV } from 'esm-env';
 import { i18nConfig, type Locale } from './config.js';
 import { getPlural, type PluralEntry } from './registry.js';
 import { getLocale } from './state.svelte.js';
 import { interpolate, type InterpolationValues } from './utils.js';
 
+const DEV = import.meta.env.DEV;
 
 const pluralRulesCache = new Map<string, Intl.PluralRules>();
 

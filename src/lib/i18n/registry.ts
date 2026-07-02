@@ -1,5 +1,6 @@
-import { DEV } from 'esm-env';
 import type { Locale } from './config.js';
+
+const DEV = import.meta.env.DEV;
 
 export type PluralEntry = {
 	one: string;

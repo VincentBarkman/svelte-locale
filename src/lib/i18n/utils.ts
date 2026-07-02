@@ -1,4 +1,4 @@
-import { DEV } from 'esm-env';
+const DEV = import.meta.env.DEV;
 
 export type InterpolationValues = Record<string, string | number>;
 

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { DEV } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { i18nConfig, type Locale } from '../config.js';
 	import { getLocale } from '../state.svelte.js';
+
+	const DEV = import.meta.env.DEV;
 
 	type Props = {
 		key: string;
