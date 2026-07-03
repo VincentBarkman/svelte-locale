@@ -1,6 +1,11 @@
 node_modules
 
+# Editors
+.vscode
+.idea
+
 # Output
+/bin
 .output
 .vercel
 .netlify

@@ -21,109 +21,25 @@ A SvelteKit-native i18n library for Svelte 5. Zero dependencies.
 
 ```bash
 npm install svelte-locale
+npx svelte-locale init
 ```
 
----
+That's it. The `init` command writes all required boilerplate into your project:
 
-## Setup
+- `src/app.html` — patches `%lang%` and `%dir%` placeholders onto `<html>`
+- `src/app.d.ts` — types `App.Locals.locale`
+- `src/hooks.server.ts` — wires up `handleI18n()`
+- `src/routes/+layout.server.ts` — passes locale to the client
+- `src/routes/+layout.ts` — imports translation files client-side
+- `src/routes/+layout.svelte` — calls `initLocale` reactively
+- `src/lib/i18n/messages.ts` — starter message file
+- `src/lib/i18n/plurals.ts` — starter plural file
+- `src/lib/i18n/functions.ts` — starter function file
+- `vite.config.ts` — patches in the `richI18n()` Vite plugin
 
-### 1. `vite.config.ts`
+Existing files are never overwritten — the command skips them and tells you.
 
-Add the Vite plugin **before** `sveltekit()`. Pass all your configured locales so the plugin can validate `<I18n>` usage at build time.
-
-```ts
-import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-import { richI18n } from 'svelte-locale/vite';
-
-export default defineConfig({
-  plugins: [
-    richI18n({ locales: ['en', 'sv'] }),
-    sveltekit()
-  ]
-});
-```
-
-### 2. `src/app.html`
-
-Add `%lang%` and `%dir%` placeholders. These are replaced server-side by `handleI18n()`.
-
-```html
-<html lang="%lang%" dir="%dir%">
-```
-
-### 3. `src/app.d.ts`
-
-Extend `App.Locals` so TypeScript knows `locals.locale` is typed.
-
-```ts
-declare global {
-  namespace App {
-    interface Locals {
-      locale: import('svelte-locale').Locale;
-    }
-  }
-}
-export {};
-```
-
-### 4. `src/hooks.server.ts`
-
-`handleI18n()` detects the locale, sets `locals.locale`, manages the locale cookie, replaces `%lang%`/`%dir%` in the HTML, and sets the `Content-Language` response header.
-
-If you also import your translation files here, they run their `defineMessages` / `definePlurals` / `defineFunctions` side-effects on every server request before any route handler runs.
-
-```ts
-import type { Handle } from '@sveltejs/kit';
-import { handleI18n } from 'svelte-locale/server';
-import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
-
-export const handle: Handle = handleI18n();
-```
-
-### 5. `src/routes/+layout.server.ts`
-
-Pass the resolved locale down to the client via layout data.
-
-```ts
-export const load = ({ locals }: { locals: App.Locals }) => ({
-  locale: locals.locale
-});
-```
-
-### 6. `src/routes/+layout.ts`
-
-Import translation files on the client side so the registries are populated before any component renders.
-
-```ts
-import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
-```
-
-### 7. `src/routes/+layout.svelte`
-
-Call `initLocale` with the server-resolved locale. The `untrack` prevents an unnecessary initial effect run.
-
-```svelte
-<script lang="ts">
-  import { untrack } from 'svelte';
-  import { initLocale } from 'svelte-locale';
-  import type { Snippet } from 'svelte';
-
-  let { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();
-
-  untrack(() => initLocale(data.locale));
-
-  $effect(() => {
-    initLocale(data.locale);
-  });
-</script>
-
-{@render children()}
-```
+Then edit `src/lib/i18n/messages.ts` with your translations and update the `locales` array in `vite.config.ts` to match.
 
 ---
 
