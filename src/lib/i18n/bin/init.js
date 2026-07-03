@@ -65,6 +65,11 @@ patch(
 		let src = readFileSync(abs, 'utf8');
 		if (src.includes(snippet)) {
 			console.log('  skip   src/app.d.ts (already patched)');
+		} else if (/\/\/\s*interface Locals/.test(src)) {
+			// SvelteKit default: commented-out interface — replace the whole comment line
+			src = src.replace(/\t*\/\/\s*interface Locals[^\n]*\n/, `\t\tinterface Locals {\n\t\t\t${snippet}\n\t\t}\n`);
+			writeFileSync(abs, src, 'utf8');
+			console.log('  patch  src/app.d.ts');
 		} else if (src.includes('interface Locals {}')) {
 			src = src.replace('interface Locals {}', `interface Locals {\n\t\t\t${snippet}\n\t\t}`);
 			writeFileSync(abs, src, 'utf8');
