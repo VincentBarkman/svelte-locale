@@ -13,7 +13,7 @@
 		"format": "prettier --write ."
 	},
 	"bin": {
-		"svelte-locale": "./bin/init.js"
+		"svelte-locale": "bin/init.js"
 	},
 	"files": [
 		"dist",
