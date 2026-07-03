@@ -47,8 +47,6 @@ function patch(rel, find, insert) {
 	console.log(`  patch  ${rel}`);
 }
 
-console.log('\nsvelte-locale init\n');
-
 // 1. app.html — replace lang="en" with placeholders
 patch(
 	'src/app.html',
@@ -56,18 +54,28 @@ patch(
 	'lang="%lang%" dir="%dir%"'
 );
 
-// 2. app.d.ts
-write('src/app.d.ts', `// See https://svelte.dev/docs/kit/types#app.d.ts
-declare global {
-\tnamespace App {
-\t\tinterface Locals {
-\t\t\tlocale: import('svelte-locale').Locale;
-\t\t}
-\t}
+// 2. app.d.ts — patch locale into existing Locals interface, or write fresh if missing
+{
+	const abs = join(cwd, 'src/app.d.ts');
+	const snippet = `locale: import('svelte-locale').Locale;`;
+	if (!existsSync(abs)) {
+		writeFileSync(abs, `// See https://svelte.dev/docs/kit/types#app.d.ts\ndeclare global {\n\tnamespace App {\n\t\tinterface Locals {\n\t\t\t${snippet}\n\t\t}\n\t}\n}\n\nexport {};\n`, 'utf8');
+		console.log('  create src/app.d.ts');
+	} else {
+		let src = readFileSync(abs, 'utf8');
+		if (src.includes(snippet)) {
+			console.log('  skip   src/app.d.ts (already patched)');
+		} else if (src.includes('interface Locals {')) {
+			src = src.replace('interface Locals {', `interface Locals {\n\t\t\t${snippet}`);
+			writeFileSync(abs, src, 'utf8');
+			console.log('  patch  src/app.d.ts');
+		} else {
+			src += `\ndeclare global {\n\tnamespace App {\n\t\tinterface Locals {\n\t\t\t${snippet}\n\t\t}\n\t}\n}\n`;
+			writeFileSync(abs, src, 'utf8');
+			console.log('  patch  src/app.d.ts');
+		}
+	}
 }
-
-export {};
-`);
 
 // 3. hooks.server.ts
 write('src/hooks.server.ts', `import type { Handle } from '@sveltejs/kit';
@@ -91,23 +99,32 @@ import '$lib/i18n/plurals';
 import '$lib/i18n/functions';
 `);
 
-// 6. +layout.svelte — only write if it doesn't already exist
-write('src/routes/+layout.svelte', `<script lang="ts">
-\timport { untrack } from 'svelte';
-\timport { initLocale } from 'svelte-locale';
-\timport type { Snippet } from 'svelte';
-
-\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();
-
-\tuntrack(() => initLocale(data.locale));
-
-\t$effect(() => {
-\t\tinitLocale(data.locale);
-\t});
-</script>
-
-{@render children()}
-`);
+// 6. +layout.svelte — write fresh or patch initLocale into existing file
+{
+	const abs = join(cwd, 'src/routes/+layout.svelte');
+	const importSnippet = `import { initLocale } from 'svelte-locale';`;
+	const effectSnippet = `$effect(() => { initLocale(data.locale); });`;
+	if (!existsSync(abs)) {
+		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\t${importSnippet}\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
+		console.log('  create src/routes/+layout.svelte');
+	} else {
+		let src = readFileSync(abs, 'utf8');
+		if (src.includes('initLocale')) {
+			console.log('  skip   src/routes/+layout.svelte (already patched)');
+		} else {
+			const hasScript = src.includes('<script');
+			if (hasScript) {
+				src = src.replace(/<script([^>]*)>/, `<script$1>\n\t${importSnippet}`);
+				const closeTag = src.lastIndexOf('</script>');
+				src = src.slice(0, closeTag) + `\n\t${effectSnippet}\n` + src.slice(closeTag);
+			} else {
+				src = `<script lang="ts">\n\t${importSnippet}\n\t${effectSnippet}\n</script>\n\n` + src;
+			}
+			writeFileSync(abs, src, 'utf8');
+			console.log('  patch  src/routes/+layout.svelte');
+		}
+	}
+}
 
 // 7. Translation stubs
 write('src/lib/i18n/messages.ts', `import { defineMessages } from 'svelte-locale';
