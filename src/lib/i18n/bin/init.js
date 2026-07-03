@@ -2,8 +2,22 @@
 // @ts-nocheck
 import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { spawn } from 'child_process';
 
 const cwd = process.cwd();
+
+console.log('\nsvelte-locale init\n');
+console.log('Installing svelte-locale...');
+
+await new Promise((resolve, reject) => {
+	const proc = spawn('npm', ['install', 'svelte-locale'], { cwd, stdio: 'inherit' });
+	proc.on('close', (code) => {
+		if (code === 0) resolve();
+		else reject(new Error('npm install exited with ' + code));
+	});
+});
+
+console.log('\nSetting up files...\n');
 
 function write(rel, content) {
 	const abs = join(cwd, rel);

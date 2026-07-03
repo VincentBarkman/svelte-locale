@@ -20,11 +20,10 @@ A SvelteKit-native i18n library for Svelte 5. Zero dependencies.
 ## Installation
 
 ```bash
-npm install svelte-locale
 npx svelte-locale init
 ```
 
-That's it. The `init` command writes all required boilerplate into your project:
+That's it. The `init` command installs the package and writes all required boilerplate into your project:
 
 - `src/app.html` — patches `%lang%` and `%dir%` placeholders onto `<html>`
 - `src/app.d.ts` — types `App.Locals.locale`
@@ -45,7 +44,13 @@ Then edit `src/lib/i18n/messages.ts` with your translations and update the `loca
 
 ## Manual Setup
 
-If you prefer to wire things up yourself, here are all the files `init` would create.
+If you prefer to wire things up yourself, first install the package:
+
+```bash
+npm install svelte-locale
+```
+
+Then create these files:
 
 ### `vite.config.ts`
 
