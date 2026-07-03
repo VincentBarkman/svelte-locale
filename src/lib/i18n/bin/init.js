@@ -65,6 +65,10 @@ patch(
 		let src = readFileSync(abs, 'utf8');
 		if (src.includes(snippet)) {
 			console.log('  skip   src/app.d.ts (already patched)');
+		} else if (src.includes('interface Locals {}')) {
+			src = src.replace('interface Locals {}', `interface Locals {\n\t\t\t${snippet}\n\t\t}`);
+			writeFileSync(abs, src, 'utf8');
+			console.log('  patch  src/app.d.ts');
 		} else if (src.includes('interface Locals {')) {
 			src = src.replace('interface Locals {', `interface Locals {\n\t\t\t${snippet}`);
 			writeFileSync(abs, src, 'utf8');
@@ -102,10 +106,10 @@ import '$lib/i18n/functions';
 // 6. +layout.svelte — write fresh or patch initLocale into existing file
 {
 	const abs = join(cwd, 'src/routes/+layout.svelte');
-	const importSnippet = `import { initLocale } from 'svelte-locale';`;
-	const effectSnippet = `$effect(() => { initLocale(data.locale); });`;
+	const importSnippet = `import { untrack } from 'svelte';\n\timport { initLocale } from 'svelte-locale';`;
+	const effectSnippet = `untrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});`;
 	if (!existsSync(abs)) {
-		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\t${importSnippet}\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
+		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\timport { initLocale } from 'svelte-locale';\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
 		console.log('  create src/routes/+layout.svelte');
 	} else {
 		let src = readFileSync(abs, 'utf8');
@@ -114,7 +118,20 @@ import '$lib/i18n/functions';
 		} else {
 			const hasScript = src.includes('<script');
 			if (hasScript) {
+				// Add imports after opening <script> tag
 				src = src.replace(/<script([^>]*)>/, `<script$1>\n\t${importSnippet}`);
+				// Add data to existing $props() destructuring if present, else append
+				if (src.match(/let\s*\{([^}]*)\}[^=]*=\s*\$props\(\)/)) {
+					src = src.replace(
+						/let\s*\{([^}]*)\}([^=]*)=\s*\$props\(\)/,
+						(m, props, types) => {
+							const hasData = /\bdata\b/.test(props);
+							const newProps = hasData ? props : props.trimEnd().replace(/,?$/, ', data');
+							return `let { ${newProps} }${types}= $props()`;
+						}
+					);
+				}
+				// Inject effect before </script>
 				const closeTag = src.lastIndexOf('</script>');
 				src = src.slice(0, closeTag) + `\n\t${effectSnippet}\n` + src.slice(closeTag);
 			} else {
