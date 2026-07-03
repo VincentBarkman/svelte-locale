@@ -43,6 +43,132 @@ Then edit `src/lib/i18n/messages.ts` with your translations and update the `loca
 
 ---
 
+## Manual Setup
+
+If you prefer to wire things up yourself, here are all the files `init` would create.
+
+### `vite.config.ts`
+
+Add `richI18n` **before** `sveltekit()`.
+
+```ts
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+import { richI18n } from 'svelte-locale/vite';
+
+export default defineConfig({
+  plugins: [
+    richI18n({ locales: ['en', 'sv'] }),
+    sveltekit()
+  ]
+});
+```
+
+### `src/app.html`
+
+```html
+<html lang="%lang%" dir="%dir%">
+```
+
+### `src/app.d.ts`
+
+```ts
+declare global {
+  namespace App {
+    interface Locals {
+      locale: import('svelte-locale').Locale;
+    }
+  }
+}
+export {};
+```
+
+### `src/hooks.server.ts`
+
+```ts
+import type { Handle } from '@sveltejs/kit';
+import { handleI18n } from 'svelte-locale/server';
+import '$lib/i18n/messages';
+import '$lib/i18n/plurals';
+import '$lib/i18n/functions';
+
+export const handle: Handle = handleI18n();
+```
+
+### `src/routes/+layout.server.ts`
+
+```ts
+export const load = ({ locals }: { locals: App.Locals }) => ({
+  locale: locals.locale
+});
+```
+
+### `src/routes/+layout.ts`
+
+```ts
+import '$lib/i18n/messages';
+import '$lib/i18n/plurals';
+import '$lib/i18n/functions';
+```
+
+### `src/routes/+layout.svelte`
+
+```svelte
+<script lang="ts">
+  import { untrack } from 'svelte';
+  import { initLocale } from 'svelte-locale';
+  import type { Snippet } from 'svelte';
+
+  let { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();
+
+  untrack(() => initLocale(data.locale));
+
+  $effect(() => {
+    initLocale(data.locale);
+  });
+</script>
+
+{@render children()}
+```
+
+### `src/lib/i18n/messages.ts`
+
+```ts
+import { defineMessages } from 'svelte-locale';
+
+defineMessages({
+  en: { 'common.save': 'Save' },
+  sv: { 'common.save': 'Spara' }
+});
+```
+
+### `src/lib/i18n/plurals.ts`
+
+```ts
+import { definePlurals } from 'svelte-locale';
+
+definePlurals({
+  en: { 'items.count': { one: '{count} item', other: '{count} items' } },
+  sv: { 'items.count': { one: '{count} sak', other: '{count} saker' } }
+});
+```
+
+### `src/lib/i18n/functions.ts`
+
+```ts
+import { createFn, defineFunctions } from 'svelte-locale';
+
+export type AppFunctions = {
+  // 'example.fn': (input: { value: string }) => string;
+};
+
+defineFunctions({ en: {}, sv: {} });
+
+export const fn = createFn<AppFunctions>();
+```
+
+---
+
 ## Configuration
 
 The library ships with a default `config.ts` baked into the library itself. To customise it, fork the library or create your own config file. The current defaults are:
