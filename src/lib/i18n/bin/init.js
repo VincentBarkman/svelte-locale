@@ -125,17 +125,15 @@ import '$lib/i18n/functions';
 			if (hasScript) {
 				// Add imports after opening <script> tag
 				src = src.replace(/<script([^>]*)>/, `<script$1>\n\t${importSnippet}`);
-				// Add data to existing $props() destructuring if present, else append
-				if (src.match(/let\s*\{([^}]*)\}[^=]*=\s*\$props\(\)/)) {
-					src = src.replace(
-						/let\s*\{([^}]*)\}([^=]*)=\s*\$props\(\)/,
-						(m, props, types) => {
-							const hasData = /\bdata\b/.test(props);
-							const newProps = hasData ? props : props.trimEnd().replace(/,?$/, ', data');
-							return `let { ${newProps} }${types}= $props()`;
-						}
-					);
-				}
+				// Replace $props() destructure with a fully typed version including data
+				src = src.replace(
+					/let\s*\{([^}]*)\}[^=\n]*=\s*\$props\(\)/,
+					(m, props) => {
+						const parts = props.split(',').map(p => p.trim()).filter(Boolean);
+						if (!parts.includes('data')) parts.push('data');
+						return `let { ${parts.join(', ')} }: { data: { locale: import('svelte-locale').Locale }; children: import('svelte').Snippet } = $props()`;
+					}
+				);
 				// Inject effect before </script>
 				const closeTag = src.lastIndexOf('</script>');
 				src = src.slice(0, closeTag) + `\n\t${effectSnippet}\n` + src.slice(closeTag);
