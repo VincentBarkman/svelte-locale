@@ -12,9 +12,11 @@ A SvelteKit-native i18n library for Svelte 5. Zero dependencies.
 - `<LocaleSwitcher>` — accessible language switcher with custom snippet support
 - `<HreflangLinks>` — SEO `<link rel="alternate">` tags
 - Intl formatters for numbers, currencies, dates, and relative time
+- ISO 8601 date formatters (`formatDateISO`, `formatDateTimeISO`)
+- BCP 47 / ISO 639 regional locale support (`en-US`, `pt-BR`, `zh-CN`, etc.)
 - Vite plugin that transforms `<I18n>` children into snippets at compile time
-- Server locale detection: URL prefix → cookie → `Accept-Language` → default
-- RTL support via `<html dir>`
+- Server locale detection: URL prefix → cookie → `Accept-Language` (full BCP 47) → default
+- RTL support via `<html dir>` (auto-detected from locale registry)
 - Zero flicker — locale is resolved server-side before any HTML is sent
 
 ## Installation
@@ -464,6 +466,27 @@ formatRelativeTime(-2, 'day')   // → '2 days ago' (en)
 formatRelativeTime(1, 'hour')   // → 'in 1 hour'
 ```
 
+### `formatDateISO(value)`
+
+Returns a date-only [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) string. Locale-independent.
+
+```ts
+import { formatDateISO } from 'svelte-locale';
+
+formatDateISO(new Date())          // → '2026-07-03'
+formatDateISO('2026-01-15T10:30Z') // → '2026-01-15'
+```
+
+### `formatDateTimeISO(value)`
+
+Returns a full UTC ISO 8601 timestamp. Useful for `<time datetime>` attributes.
+
+```ts
+import { formatDateTimeISO } from 'svelte-locale';
+
+formatDateTimeISO(new Date()) // → '2026-07-03T10:00:00.000Z'
+```
+
 ---
 
 ## Routing Helpers
@@ -505,6 +528,76 @@ Remove the locale prefix from a path.
 ```ts
 stripLocalePrefix('/sv/settings') // → '/settings'
 ```
+
+---
+
+## ISO & BCP 47 Locale Support
+
+### Regional locale codes
+
+The library supports full [BCP 47](https://www.rfc-editor.org/rfc/rfc5646) locale tags. Use them anywhere you use short codes:
+
+```ts
+// vite.config.ts
+richI18n({ locales: ['en-US', 'en-GB', 'pt-BR', 'zh-CN', 'zh-TW'] })
+```
+
+```ts
+// src/lib/i18n/messages.ts
+defineMessages({
+  'en-US': { 'currency.symbol': '$' },
+  'en-GB': { 'currency.symbol': '£' },
+  'pt-BR': { 'greeting': 'Olá' }
+});
+```
+
+The registry ships with entries for all common regional variants. For any unregistered subtag the library automatically falls back to the base language for RTL detection — so `ar-DZ` correctly resolves as `rtl` via the `ar` base entry.
+
+### Built-in regional variants
+
+| Tag | Name |
+|-----|------|
+| `en-US` | English (US) |
+| `en-GB` | English (UK) |
+| `en-AU` | English (Australia) |
+| `en-CA` | English (Canada) |
+| `fr-FR` / `fr-CA` / `fr-BE` / `fr-CH` | French variants |
+| `de-DE` / `de-AT` / `de-CH` | German variants |
+| `es-ES` / `es-MX` / `es-AR` / `es-CO` | Spanish variants |
+| `pt-PT` / `pt-BR` | Portuguese variants |
+| `zh-CN` / `zh-TW` / `zh-HK` | Chinese variants |
+| `ar-SA` / `ar-EG` | Arabic variants (RTL) |
+| `nl-NL` / `nl-BE` | Dutch variants |
+| `it-IT` / `it-CH` | Italian variants |
+| `sv-SE` / `nb-NO` / `nn-NO` / `fi-FI` / `da-DK` | Nordic |
+| `ru-RU` / `uk-UA` / `pl-PL` | Eastern European |
+| `ja-JP` / `ko-KR` / `hi-IN` | Asian |
+
+Add any extra variant with `defineLocale`:
+
+```ts
+import { defineLocale } from 'svelte-locale';
+defineLocale('es-CL', { name: 'Español (Chile)', dir: 'ltr' });
+```
+
+### Locale utilities
+
+```ts
+import { getBaseLocale, normalizeLocale, getLocaleDir, getLocaleName } from 'svelte-locale';
+
+getBaseLocale('en-US')      // → 'en'
+normalizeLocale('pt-br')    // → 'pt-BR'
+getLocaleDir('ar-SA')       // → 'rtl'
+getLocaleDir('ar-DZ')       // → 'rtl'  (falls back to 'ar')
+getLocaleName('pt-BR')      // → 'Português (Brasil)'
+```
+
+### `Accept-Language` detection
+
+The server-side locale detector now matches full BCP 47 tags before falling back to the base language:
+
+- `Accept-Language: pt-BR, pt;q=0.9, en;q=0.8` → resolves to `pt-BR` if configured, then `pt`, then `en`
+- Works automatically — no extra configuration needed.
 
 ---
 
