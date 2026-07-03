@@ -45,3 +45,11 @@ export function formatRelativeTime(
 ): string {
 	return getRelativeTimeFormat(getLocale(), { numeric: 'auto', ...options }).format(value, unit);
 }
+
+export function formatDateISO(value: Date | string | number): string {
+	return new Date(value).toISOString().slice(0, 10);
+}
+
+export function formatDateTimeISO(value: Date | string | number): string {
+	return new Date(value).toISOString();
+}

@@ -4,6 +4,45 @@ export interface LocaleDefinition {
 }
 
 const localeRegistry: Record<string, LocaleDefinition> = {
+	// BCP 47 regional variants
+	'en-US': { name: 'English (US)', dir: 'ltr' },
+	'en-GB': { name: 'English (UK)', dir: 'ltr' },
+	'en-AU': { name: 'English (Australia)', dir: 'ltr' },
+	'en-CA': { name: 'English (Canada)', dir: 'ltr' },
+	'fr-FR': { name: 'Français (France)', dir: 'ltr' },
+	'fr-CA': { name: 'Français (Canada)', dir: 'ltr' },
+	'fr-BE': { name: 'Français (Belgique)', dir: 'ltr' },
+	'fr-CH': { name: 'Français (Suisse)', dir: 'ltr' },
+	'de-DE': { name: 'Deutsch (Deutschland)', dir: 'ltr' },
+	'de-AT': { name: 'Deutsch (Österreich)', dir: 'ltr' },
+	'de-CH': { name: 'Deutsch (Schweiz)', dir: 'ltr' },
+	'es-ES': { name: 'Español (España)', dir: 'ltr' },
+	'es-MX': { name: 'Español (México)', dir: 'ltr' },
+	'es-AR': { name: 'Español (Argentina)', dir: 'ltr' },
+	'es-CO': { name: 'Español (Colombia)', dir: 'ltr' },
+	'pt-PT': { name: 'Português (Portugal)', dir: 'ltr' },
+	'pt-BR': { name: 'Português (Brasil)', dir: 'ltr' },
+	'zh-CN': { name: '中文 (简体)', dir: 'ltr' },
+	'zh-TW': { name: '中文 (繁體)', dir: 'ltr' },
+	'zh-HK': { name: '中文 (香港)', dir: 'ltr' },
+	'ar-SA': { name: 'العربية (السعودية)', dir: 'rtl' },
+	'ar-EG': { name: 'العربية (مصر)', dir: 'rtl' },
+	'nl-NL': { name: 'Nederlands (Nederland)', dir: 'ltr' },
+	'nl-BE': { name: 'Nederlands (België)', dir: 'ltr' },
+	'it-IT': { name: 'Italiano (Italia)', dir: 'ltr' },
+	'it-CH': { name: 'Italiano (Svizzera)', dir: 'ltr' },
+	'nb-NO': { name: 'Norsk bokmål (Norge)', dir: 'ltr' },
+	'nn-NO': { name: 'Nynorsk (Norge)', dir: 'ltr' },
+	'sv-SE': { name: 'Svenska (Sverige)', dir: 'ltr' },
+	'fi-FI': { name: 'Suomi (Suomi)', dir: 'ltr' },
+	'da-DK': { name: 'Dansk (Danmark)', dir: 'ltr' },
+	'pl-PL': { name: 'Polski (Polska)', dir: 'ltr' },
+	'ru-RU': { name: 'Русский (Россия)', dir: 'ltr' },
+	'uk-UA': { name: 'Українська (Україна)', dir: 'ltr' },
+	'ja-JP': { name: '日本語 (日本)', dir: 'ltr' },
+	'ko-KR': { name: '한국어 (대한민국)', dir: 'ltr' },
+	'hi-IN': { name: 'हिन्दी (भारत)', dir: 'ltr' },
+	// ISO 639-1 base codes
 	af: { name: 'Afrikaans', dir: 'ltr' },
 	sq: { name: 'Shqip', dir: 'ltr' },
 	am: { name: 'አማርኛ', dir: 'ltr' },
@@ -96,7 +135,19 @@ export function getLocaleName(locale: string): string {
 }
 
 export function getLocaleDir(locale: string): 'ltr' | 'rtl' {
-	return localeRegistry[locale]?.dir ?? 'ltr';
+	if (localeRegistry[locale]) return localeRegistry[locale].dir;
+	const base = locale.split('-')[0];
+	return localeRegistry[base]?.dir ?? 'ltr';
+}
+
+export function getBaseLocale(locale: string): string {
+	return locale.split('-')[0];
+}
+
+export function normalizeLocale(locale: string): string {
+	const parts = locale.split('-');
+	if (parts.length === 1) return parts[0].toLowerCase();
+	return parts[0].toLowerCase() + '-' + parts[1].toUpperCase();
 }
 
 export function defineLocale(code: string, definition: LocaleDefinition): void {
