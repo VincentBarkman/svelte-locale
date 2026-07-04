@@ -4,9 +4,9 @@ A SvelteKit-native i18n library for Svelte 5. Zero dependencies.
 
 ## Features
 
-- `t()` — string translations with `{variable}` interpolation
-- `plural()` — count-based pluralisation via `Intl.PluralRules`
-- `fn()` — logic-based translations returning arbitrary values
+- `i18n.t()` — string translations with `{variable}` interpolation
+- `i18n.plural()` — count-based pluralisation via `Intl.PluralRules`
+- `i18n.fn()` — logic-based translations returning arbitrary values
 - `<I18n>` — rich component translations with server-side rendering
 - `<LocaleLink>` — locale-aware anchor tags
 - `<LocaleSwitcher>` — accessible language switcher with custom snippet support
@@ -31,16 +31,14 @@ That's it. The `init` command installs the package and writes all required boile
 - `src/app.d.ts` — types `App.Locals.locale`
 - `src/hooks.server.ts` — wires up `handleI18n()`
 - `src/routes/+layout.server.ts` — passes locale to the client
-- `src/routes/+layout.ts` — imports translation files client-side
-- `src/routes/+layout.svelte` — calls `initLocale` reactively
-- `src/lib/i18n/messages.ts` — starter message file
-- `src/lib/i18n/plurals.ts` — starter plural file
-- `src/lib/i18n/functions.ts` — starter function file
+- `src/routes/+layout.ts` — imports the i18n config
+- `src/routes/+layout.svelte` — calls `i18n.initLocale` reactively
+- `src/lib/i18n.ts` — configuration file with your locales
 - `vite.config.ts` — patches in the `richI18n()` Vite plugin
 
 Existing files are never overwritten — the command skips them and tells you.
 
-Then edit `src/lib/i18n/messages.ts` with your translations and update the `locales` array in `vite.config.ts` to match.
+Then edit `src/lib/i18n.ts` to configure your locales and create language data files.
 
 ---
 
@@ -54,9 +52,27 @@ npm install svelte-locale
 
 Then create these files:
 
+### `src/lib/i18n.ts`
+
+```ts
+import { defineConfig } from 'svelte-locale';
+
+export default defineConfig({
+  locales: ['en', 'sv'],
+  defaultLocale: 'en',
+  fallbackLocale: 'en',
+  cookieName: 'locale',
+  routing: {
+    strategy: 'none',
+    prefixDefaultLocale: false
+  },
+  detection: ['url', 'cookie', 'accept-language', 'default']
+});
+```
+
 ### `vite.config.ts`
 
-Add `richI18n` **before** `sveltekit()`.
+Add `richI18n` **before** `sveltekit()`. The plugin auto-discovers your `i18n.ts` config.
 
 ```ts
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -65,7 +81,7 @@ import { richI18n } from 'svelte-locale/vite';
 
 export default defineConfig({
   plugins: [
-    richI18n({ locales: ['en', 'sv'] }),
+    richI18n(),
     sveltekit()
   ]
 });
@@ -95,9 +111,6 @@ export {};
 ```ts
 import type { Handle } from '@sveltejs/kit';
 import { handleI18n } from 'svelte-locale/server';
-import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
 
 export const handle: Handle = handleI18n();
 ```
@@ -113,9 +126,7 @@ export const load = ({ locals }: { locals: App.Locals }) => ({
 ### `src/routes/+layout.ts`
 
 ```ts
-import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
+import '$lib/i18n';
 ```
 
 ### `src/routes/+layout.svelte`
@@ -123,60 +134,72 @@ import '$lib/i18n/functions';
 ```svelte
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { initLocale } from 'svelte-locale';
+  import i18n from 'svelte-locale';
   import type { Snippet } from 'svelte';
 
   let { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();
 
-  untrack(() => initLocale(data.locale));
+  untrack(() => i18n.initLocale(data.locale));
 
   $effect(() => {
-    initLocale(data.locale);
+    i18n.initLocale(data.locale);
   });
 </script>
 
 {@render children()}
 ```
 
-### `src/lib/i18n/messages.ts`
+### Defining Language Data
+
+Create language data files anywhere in your project and register them via the `i18n` namespace:
 
 ```ts
-import { defineMessages } from 'svelte-locale';
+// src/lib/i18n/messages.ts
+import i18n from 'svelte-locale';
 
-defineMessages({
-  en: { 'common.save': 'Save' },
-  sv: { 'common.save': 'Spara' }
+i18n.defineMessages({
+  en: {
+    'common.save': 'Save',
+    'common.cancel': 'Cancel'
+  },
+  sv: {
+    'common.save': 'Spara',
+    'common.cancel': 'Avbryt'
+  }
 });
 ```
 
-### `src/lib/i18n/plurals.ts`
-
 ```ts
-import { definePlurals } from 'svelte-locale';
+// src/lib/i18n/plurals.ts
+import i18n from 'svelte-locale';
 
-definePlurals({
-  en: { 'items.count': { one: '{count} item', other: '{count} items' } },
-  sv: { 'items.count': { one: '{count} sak', other: '{count} saker' } }
+i18n.definePlurals({
+  en: {
+    'items.count': { one: '{count} item', other: '{count} items' }
+  },
+  sv: {
+    'items.count': { one: '{count} sak', other: '{count} saker' }
+  }
 });
 ```
 
-### `src/lib/i18n/functions.ts`
-
 ```ts
-import { createFn, defineFunctions } from 'svelte-locale';
+// src/lib/i18n/functions.ts
+import i18n from 'svelte-locale';
 
-export type AppFunctions = {
-  // 'example.fn': (input: { value: string }) => string;
-};
-
-defineFunctions({ en: {}, sv: {} });
-
-export const fn = createFn<AppFunctions>();
+i18n.defineFunctions({
+  en: {
+    'format.currency': (amount: number) => `$${amount.toFixed(2)}`
+  },
+  sv: {
+    'format.currency': (amount: number) => `${amount.toFixed(2)} kr`
+  }
+});
 ```
+
+Note: `defineMessages`, `definePlurals`, and `defineFunctions` can be called anywhere and as many times as you want — they merge into the registry.
 
 ---
-
-## Configuration
 
 The library ships with a default `config.ts` baked into the library itself. To customise it, fork the library or create your own config file. The current defaults are:
 

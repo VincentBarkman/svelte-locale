@@ -1,9 +1,44 @@
 import { parse } from 'svelte/compiler';
 import MagicString from 'magic-string';
 import type { Plugin } from 'vite';
+import { readFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
 
 export interface RichI18nOptions {
 	locales?: readonly string[];
+	configPath?: string;
+}
+
+function discoverConfigLocales(root: string, configPath?: string): string[] {
+	const paths = [
+		configPath,
+		'src/lib/i18n.ts',
+		'src/i18n.ts',
+		'src/lib/i18n/index.ts',
+		'src/i18n/index.ts'
+	].filter(Boolean) as string[];
+
+	for (const path of paths) {
+		const absPath = resolve(root, path);
+		if (existsSync(absPath)) {
+			try {
+				const content = readFileSync(absPath, 'utf8');
+				const localesMatch = content.match(/locales:\s*\[([^\]]+)\]/);
+				if (localesMatch) {
+					const localesStr = localesMatch[1];
+					const locales = localesStr
+						.split(',')
+						.map((s) => s.trim().replace(/['"]/g, ''))
+						.filter(Boolean);
+					if (locales.length > 0) return locales;
+				}
+			} catch {
+				// Skip if read fails
+			}
+		}
+	}
+
+	return [];
 }
 
 interface LangChild {
@@ -131,11 +166,17 @@ function transformI18nBlock(src: string, id: string, validLocales: Set<string>):
 }
 
 export function richI18n(options: RichI18nOptions = {}): Plugin {
-	const validLocales = new Set<string>(options.locales ?? []);
+	let validLocales: Set<string>;
 
 	return {
 		name: 'vite-plugin-svelte-i18n',
 		enforce: 'pre',
+
+		configResolved(config) {
+			const discovered = discoverConfigLocales(config.root, options.configPath);
+			const explicit = options.locales ?? [];
+			validLocales = new Set<string>(explicit.length > 0 ? explicit : discovered);
+		},
 
 		transform(code, id) {
 			if (!id.endsWith('.svelte')) return;

@@ -1,10 +1,13 @@
+export { default as i18n } from './namespace.js';
+export type { SetLocaleOptions } from './state.svelte.js';
+
 export { t, tForLocale } from './t.js';
 export { plural, pluralForLocale } from './plural.js';
 export type { PluralEntry } from './registry.js';
 export { fn, fnForLocale, createFn } from './fn.js';
 export { defineMessages, definePlurals, defineFunctions } from './registry.js';
 
-export { i18n, initLocale, getLocale, setLocale } from './state.svelte.js';
+export { i18n as i18nState, initLocale, getLocale, setLocale } from './state.svelte.js';
 
 export { formatNumber, formatCurrency, formatDate, formatRelativeTime, formatDateISO, formatDateTimeISO } from './format.js';
 

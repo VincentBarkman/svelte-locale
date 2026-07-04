@@ -89,9 +89,6 @@ patch(
 // 3. hooks.server.ts
 write('src/hooks.server.ts', `import type { Handle } from '@sveltejs/kit';
 import { handleI18n } from 'svelte-locale/server';
-import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
 
 export const handle: Handle = handleI18n();
 `);
@@ -103,22 +100,20 @@ write('src/routes/+layout.server.ts', `export const load = ({ locals }: { locals
 `);
 
 // 5. +layout.ts
-write('src/routes/+layout.ts', `import '$lib/i18n/messages';
-import '$lib/i18n/plurals';
-import '$lib/i18n/functions';
+write('src/routes/+layout.ts', `import '$lib/i18n';
 `);
 
 // 6. +layout.svelte — write fresh or patch initLocale into existing file
 {
 	const abs = join(cwd, 'src/routes/+layout.svelte');
-	const importSnippet = `import { untrack } from 'svelte';\n\timport { initLocale } from 'svelte-locale';`;
-	const effectSnippet = `untrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});`;
+	const importSnippet = `import { untrack } from 'svelte';\n\timport i18n from 'svelte-locale';`;
+	const effectSnippet = `untrack(() => i18n.initLocale(data.locale));\n\n\t$effect(() => {\n\t\ti18n.initLocale(data.locale);\n\t});`;
 	if (!existsSync(abs)) {
-		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\timport { initLocale } from 'svelte-locale';\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => initLocale(data.locale));\n\n\t$effect(() => {\n\t\tinitLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
+		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\timport i18n from 'svelte-locale';\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => i18n.initLocale(data.locale));\n\n\t$effect(() => {\n\t\ti18n.initLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
 		console.log('  create src/routes/+layout.svelte');
 	} else {
 		let src = readFileSync(abs, 'utf8');
-		if (src.includes('initLocale')) {
+		if (src.includes('i18n.initLocale')) {
 			console.log('  skip   src/routes/+layout.svelte (already patched)');
 		} else {
 			const hasScript = src.includes('<script');
@@ -146,45 +141,20 @@ import '$lib/i18n/functions';
 	}
 }
 
-// 7. Translation stubs
-write('src/lib/i18n/messages.ts', `import { defineMessages } from 'svelte-locale';
+// 7. i18n.ts config file
+write('src/lib/i18n.ts', `import { defineConfig } from 'svelte-locale';
 
-defineMessages({
-\ten: {
-\t\t'common.save': 'Save',
-\t\t'common.cancel': 'Cancel'
+export default defineConfig({
+\tlocales: ['en', 'sv'],
+\tdefaultLocale: 'en',
+\tfallbackLocale: 'en',
+\tcookieName: 'locale',
+\trouting: {
+\t\tstrategy: 'none',
+\t\tprefixDefaultLocale: false
 \t},
-\tsv: {
-\t\t'common.save': 'Spara',
-\t\t'common.cancel': 'Avbryt'
-\t}
+\tdetection: ['url', 'cookie', 'accept-language', 'default']
 });
-`);
-
-write('src/lib/i18n/plurals.ts', `import { definePlurals } from 'svelte-locale';
-
-definePlurals({
-\ten: {
-\t\t'items.count': { one: '{count} item', other: '{count} items' }
-\t},
-\tsv: {
-\t\t'items.count': { one: '{count} sak', other: '{count} saker' }
-\t}
-});
-`);
-
-write('src/lib/i18n/functions.ts', `import { createFn, defineFunctions } from 'svelte-locale';
-
-export type AppFunctions = {
-\t// 'example.fn': (input: { value: string }) => string;
-};
-
-defineFunctions({
-\ten: {},
-\tsv: {}
-});
-
-export const fn = createFn<AppFunctions>();
 `);
 
 // 8. vite.config.ts — add richI18n plugin if not present
@@ -198,7 +168,7 @@ export const fn = createFn<AppFunctions>();
 			src = `import { richI18n } from 'svelte-locale/vite';\n` + src;
 			src = src.replace(
 				/plugins\s*:\s*\[/,
-				`plugins: [\n\t\trichI18n({ locales: ['en', 'sv'] }),`
+				`plugins: [\n\t\trichI18n(),`
 			);
 			writeFileSync(abs, src, 'utf8');
 			console.log(`  patch  vite.config.ts`);
@@ -208,4 +178,4 @@ export const fn = createFn<AppFunctions>();
 	}
 }
 
-console.log('\nDone. Edit src/lib/i18n/messages.ts and add your locales to vite.config.ts.\n');
+console.log('\nDone. Edit src/lib/i18n.ts to configure your locales.\n');
