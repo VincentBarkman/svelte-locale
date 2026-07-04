@@ -35,7 +35,23 @@ export function formatCurrency(value: number, currency = 'USD', options?: Intl.N
 }
 
 export function formatDate(value: Date | string | number, options?: Intl.DateTimeFormatOptions): string {
-	return getDateTimeFormat(getLocale(), options).format(new Date(value));
+	const date = new Date(value);
+	if (isNaN(date.getTime())) {
+		return String(value);
+	}
+	return getDateTimeFormat(getLocale(), options).format(date);
+}
+
+export function formatDateForLocale(
+	value: Date | string | number,
+	locale: string,
+	options?: Intl.DateTimeFormatOptions
+): string {
+	const date = new Date(value);
+	if (isNaN(date.getTime())) {
+		return String(value);
+	}
+	return getDateTimeFormat(locale, options).format(date);
 }
 
 export function formatRelativeTime(
@@ -47,9 +63,17 @@ export function formatRelativeTime(
 }
 
 export function formatDateISO(value: Date | string | number): string {
-	return new Date(value).toISOString().slice(0, 10);
+	const date = new Date(value);
+	if (isNaN(date.getTime())) {
+		return String(value);
+	}
+	return date.toISOString().slice(0, 10);
 }
 
 export function formatDateTimeISO(value: Date | string | number): string {
-	return new Date(value).toISOString();
+	const date = new Date(value);
+	if (isNaN(date.getTime())) {
+		return String(value);
+	}
+	return date.toISOString();
 }

@@ -11,6 +11,7 @@
 		as?: string;
 		class?: string;
 		style?: string;
+		children?: Snippet;
 		[lang: string]: Snippet<[]> | string | undefined;
 	};
 
@@ -21,9 +22,11 @@
 	const activeLocale = $derived(getLocale());
 
 	const activeSnippet = $derived.by(() => {
+		// First check if locale snippets are passed as props (post-transform)
 		const current = props[activeLocale];
 		if (current && typeof current === 'function') return current as Snippet<[]>;
 
+		// Fallback to props.fallback or i18nConfig.fallbackLocale
 		const fb = props.fallback ?? i18nConfig.fallbackLocale;
 		const fallbackSnippet = props[fb];
 		if (fallbackSnippet && typeof fallbackSnippet === 'function') {

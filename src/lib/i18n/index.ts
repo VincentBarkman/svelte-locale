@@ -7,9 +7,9 @@ export type { PluralEntry } from './registry.js';
 export { fn, fnForLocale, createFn } from './fn.js';
 export { defineMessages, definePlurals, defineFunctions } from './registry.js';
 
-export { i18n as i18nState, initLocale, getLocale, setLocale } from './state.svelte.js';
+export { initLocale, getLocale, setLocale } from './state.svelte.js';
 
-export { formatNumber, formatCurrency, formatDate, formatRelativeTime, formatDateISO, formatDateTimeISO } from './format.js';
+export { formatNumber, formatCurrency, formatDate, formatDateForLocale, formatRelativeTime, formatDateISO, formatDateTimeISO } from './format.js';
 
 export { withLocale, switchLocaleInPath, getLocaleFromPath, stripLocalePrefix } from './route.js';
 

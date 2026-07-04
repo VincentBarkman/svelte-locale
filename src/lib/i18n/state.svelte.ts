@@ -7,12 +7,6 @@ import { switchLocaleInPath } from './route.js';
 
 let _locale = $state<Locale>(i18nConfig.defaultLocale);
 
-export const i18n = {
-	get locale() {
-		return _locale;
-	}
-};
-
 export function getLocale(): Locale {
 	return _locale;
 }

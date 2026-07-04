@@ -1,6 +1,6 @@
 {
 	"name": "svelte-locale",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
@@ -10,7 +10,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"test": "vitest"
 	},
 	"bin": {
 		"svelte-locale": "bin/init.js"
@@ -45,6 +46,10 @@
 		"./vite": {
 			"types": "./dist/i18n/vite/index.d.ts",
 			"default": "./dist/i18n/vite/index.js"
+		},
+		"./define-config": {
+			"types": "./dist/i18n/define-config.d.ts",
+			"default": "./dist/i18n/define-config.js"
 		}
 	},
 	"peerDependencies": {
@@ -74,7 +79,8 @@
 		"svelte-check": "^4.6.0",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
-		"vite": "^8.0.16"
+		"vite": "^8.0.16",
+		"vitest": "^2.0.0"
 	},
 	"license": "MIT",
 	"repository": {

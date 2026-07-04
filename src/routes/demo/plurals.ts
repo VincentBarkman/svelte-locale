@@ -1,13 +1,13 @@
-import i18n from '../i18n/namespace';
+import i18n from '$lib/i18n/namespace';
 
 i18n.definePlurals({
-	en: {
+	'en-US': {
 		'demo.items': {
 			one: '1 item',
 			other: '{count} items'
 		}
 	},
-	sv: {
+	'sv-SE': {
 		'demo.items': {
 			one: '1 objekt',
 			other: '{count} objekt'

@@ -17,6 +17,7 @@
 		buttonClass?: string;
 		buttonStyle?: string;
 		button?: Snippet<[ButtonSnippetProps]>;
+		locales?: readonly string[];
 	};
 
 	let {
@@ -24,14 +25,17 @@
 		style,
 		buttonClass,
 		buttonStyle,
-		button
+		button,
+		locales
 	}: Props = $props();
 
 	const activeLocale = $derived(getLocale());
+	const configLocales = $derived(i18nConfig.locales);
+	const displayLocales = $derived(locales ?? configLocales);
 </script>
 
 <div role="group" aria-label="Language switcher" class={className} {style}>
-	{#each i18nConfig.locales as locale (locale)}
+	{#each displayLocales as locale (locale)}
 		{@const active = activeLocale === locale}
 		{@const label = getLocaleName(locale)}
 		{@const select = () => setLocale(locale as Locale, { navigate: true })}

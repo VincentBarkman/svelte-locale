@@ -4,7 +4,6 @@ export interface LocaleDefinition {
 }
 
 const localeRegistry: Record<string, LocaleDefinition> = {
-	// BCP 47 regional variants
 	'en-US': { name: 'English (US)', dir: 'ltr' },
 	'en-GB': { name: 'English (UK)', dir: 'ltr' },
 	'en-AU': { name: 'English (Australia)', dir: 'ltr' },
@@ -42,7 +41,6 @@ const localeRegistry: Record<string, LocaleDefinition> = {
 	'ja-JP': { name: '日本語 (日本)', dir: 'ltr' },
 	'ko-KR': { name: '한국어 (대한민국)', dir: 'ltr' },
 	'hi-IN': { name: 'हिन्दी (भारत)', dir: 'ltr' },
-	// ISO 639-1 base codes
 	af: { name: 'Afrikaans', dir: 'ltr' },
 	sq: { name: 'Shqip', dir: 'ltr' },
 	am: { name: 'አማርኛ', dir: 'ltr' },

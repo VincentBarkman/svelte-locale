@@ -93,61 +93,13 @@ import { handleI18n } from 'svelte-locale/server';
 export const handle: Handle = handleI18n();
 `);
 
-// 4. +layout.server.ts
-write('src/routes/+layout.server.ts', `export const load = ({ locals }: { locals: App.Locals }) => ({
-\tlocale: locals.locale
-});
-`);
-
-// 5. +layout.ts
-write('src/routes/+layout.ts', `import '$lib/i18n';
-`);
-
-// 6. +layout.svelte — write fresh or patch initLocale into existing file
-{
-	const abs = join(cwd, 'src/routes/+layout.svelte');
-	const importSnippet = `import { untrack } from 'svelte';\n\timport i18n from 'svelte-locale';`;
-	const effectSnippet = `untrack(() => i18n.initLocale(data.locale));\n\n\t$effect(() => {\n\t\ti18n.initLocale(data.locale);\n\t});`;
-	if (!existsSync(abs)) {
-		writeFileSync(abs, `<script lang="ts">\n\timport { untrack } from 'svelte';\n\timport i18n from 'svelte-locale';\n\timport type { Snippet } from 'svelte';\n\n\tlet { data, children }: { data: { locale: import('svelte-locale').Locale }; children: Snippet } = $props();\n\n\tuntrack(() => i18n.initLocale(data.locale));\n\n\t$effect(() => {\n\t\ti18n.initLocale(data.locale);\n\t});\n</script>\n\n{@render children()}\n`, 'utf8');
-		console.log('  create src/routes/+layout.svelte');
-	} else {
-		let src = readFileSync(abs, 'utf8');
-		if (src.includes('i18n.initLocale')) {
-			console.log('  skip   src/routes/+layout.svelte (already patched)');
-		} else {
-			const hasScript = src.includes('<script');
-			if (hasScript) {
-				// Add imports after opening <script> tag
-				src = src.replace(/<script([^>]*)>/, `<script$1>\n\t${importSnippet}`);
-				// Replace $props() destructure with a fully typed version including data
-				src = src.replace(
-					/let\s*\{([^}]*)\}[^=\n]*=\s*\$props\(\)/,
-					(m, props) => {
-						const parts = props.split(',').map(p => p.trim()).filter(Boolean);
-						if (!parts.includes('data')) parts.push('data');
-						return `let { ${parts.join(', ')} }: { data: { locale: import('svelte-locale').Locale }; children: import('svelte').Snippet } = $props()`;
-					}
-				);
-				// Inject effect before </script>
-				const closeTag = src.lastIndexOf('</script>');
-				src = src.slice(0, closeTag) + `\n\t${effectSnippet}\n` + src.slice(closeTag);
-			} else {
-				src = `<script lang="ts">\n\t${importSnippet}\n\t${effectSnippet}\n</script>\n\n` + src;
-			}
-			writeFileSync(abs, src, 'utf8');
-			console.log('  patch  src/routes/+layout.svelte');
-		}
-	}
-}
-
-// 7. i18n.ts config file
+// 4. i18n.ts config file
 write('src/lib/i18n.ts', `import { defineConfig } from 'svelte-locale';
 
 export default defineConfig({
-\tlocales: ['en', 'sv'],
-\tdefaultLocale: 'en',
-\tfallbackLocale: 'en',
+\tlocales: ['en-US', 'sv-SE'],
+\tdefaultLocale: 'en-US',
+\tfallbackLocale: 'en-US',
 \tcookieName: 'locale',
 \trouting: {
 \t\tstrategy: 'none',
@@ -157,7 +109,7 @@ export default defineConfig({
 });
 `);
 
-// 8. vite.config.ts — add richI18n plugin if not present
+// 5. vite.config.ts — add richI18n plugin if not present
 {
 	const abs = join(cwd, 'vite.config.ts');
 	if (existsSync(abs)) {

@@ -29,12 +29,18 @@ export function detectLocale(event: RequestEvent): Locale {
 			.split(',')
 			.map((s) => s.split(';')[0].trim());
 		for (const raw of tags) {
-			const normalized = raw.includes('-')
-				? raw.split('-')[0].toLowerCase() + '-' + raw.split('-')[1].toUpperCase()
-				: raw.toLowerCase();
+			let normalized: string;
+			if (raw.includes('-')) {
+				const parts = raw.split('-');
+				normalized = parts[0].toLowerCase() + '-' + parts[1].toUpperCase();
+			} else {
+				normalized = raw.toLowerCase();
+			}
 			if (isLocale(normalized)) return normalized;
-			const base = normalized.split('-')[0];
-			if (isLocale(base)) return base;
+			if (raw.includes('-')) {
+				const base = raw.split('-')[0].toLowerCase();
+				if (base && isLocale(base)) return base;
+			}
 		}
 	}
 

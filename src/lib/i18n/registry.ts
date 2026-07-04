@@ -19,39 +19,36 @@ const messageRegistry = new Map<Locale, MessageMap>();
 const pluralRegistry = new Map<Locale, PluralMap>();
 const functionRegistry = new Map<Locale, FunctionMap>();
 
+function mergeWithWarning<T extends Record<string, unknown>>(
+	registry: Map<Locale, T>,
+	locale: Locale,
+	map: T,
+	funcName: string
+): void {
+	const existing = registry.get(locale) ?? {};
+	if (DEV) {
+		for (const key of Object.keys(map)) {
+			if (key in existing) console.warn(`[i18n] ${funcName}: key "${key}" for locale "${locale}" is being overwritten.`);
+		}
+	}
+	registry.set(locale, { ...existing, ...map });
+}
+
 export function defineMessages(data: Partial<Record<Locale, MessageMap>>): void {
 	for (const [locale, map] of Object.entries(data) as [Locale, MessageMap][]) {
-		const existing = messageRegistry.get(locale) ?? {};
-		if (DEV) {
-			for (const key of Object.keys(map)) {
-				if (key in existing) console.warn(`[i18n] defineMessages: key "${key}" for locale "${locale}" is being overwritten.`);
-			}
-		}
-		messageRegistry.set(locale, { ...existing, ...map });
+		mergeWithWarning(messageRegistry, locale, map, 'defineMessages');
 	}
 }
 
 export function definePlurals(data: Partial<Record<Locale, PluralMap>>): void {
 	for (const [locale, map] of Object.entries(data) as [Locale, PluralMap][]) {
-		const existing = pluralRegistry.get(locale) ?? {};
-		if (DEV) {
-			for (const key of Object.keys(map)) {
-				if (key in existing) console.warn(`[i18n] definePlurals: key "${key}" for locale "${locale}" is being overwritten.`);
-			}
-		}
-		pluralRegistry.set(locale, { ...existing, ...map });
+		mergeWithWarning(pluralRegistry, locale, map, 'definePlurals');
 	}
 }
 
 export function defineFunctions(data: Partial<Record<Locale, FunctionMap>>): void {
 	for (const [locale, map] of Object.entries(data) as [Locale, FunctionMap][]) {
-		const existing = functionRegistry.get(locale) ?? {};
-		if (DEV) {
-			for (const key of Object.keys(map)) {
-				if (key in existing) console.warn(`[i18n] defineFunctions: key "${key}" for locale "${locale}" is being overwritten.`);
-			}
-		}
-		functionRegistry.set(locale, { ...existing, ...map });
+		mergeWithWarning(functionRegistry, locale, map, 'defineFunctions');
 	}
 }
 
