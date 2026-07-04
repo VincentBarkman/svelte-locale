@@ -92,6 +92,16 @@
 		"url": "https://github.com/VincentBarkman/svelte-locale/issues"
 	},
 	"keywords": [
-		"svelte"
+		"svelte",
+		"sveltekit",
+		"i18n",
+		"internationalization",
+		"localization",
+		"l10n",
+		"translation",
+		"locale",
+		"multilingual",
+		"ssr",
+		"server-side-rendering"
 	]
 }
